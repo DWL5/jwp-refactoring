@@ -1,6 +1,6 @@
 package kitchenpos.fixtures;
 
-import kitchenpos.domain.OrderLineItem;
+import kitchenpos.order.domain.OrderLineItem;
 
 import static kitchenpos.fixtures.MenuFixture.치즈폭탄;
 import static kitchenpos.fixtures.ProductFixture.알리오갈리오;

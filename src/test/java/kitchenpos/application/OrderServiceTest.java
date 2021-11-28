@@ -1,11 +1,15 @@
 package kitchenpos.application;
 
 import kitchenpos.menu.dao.MenuDao;
-import kitchenpos.dao.OrderDao;
 import kitchenpos.dao.OrderLineItemDao;
 import kitchenpos.dao.OrderTableDao;
-import kitchenpos.domain.Order;
-import kitchenpos.domain.OrderStatus;
+import kitchenpos.menu.repository.MenuRepository;
+import kitchenpos.order.application.OrderService;
+import kitchenpos.order.domain.Order;
+import kitchenpos.order.domain.OrderStatus;
+import kitchenpos.order.dto.request.OrderRequest;
+import kitchenpos.order.dto.response.OrderResponse;
+import kitchenpos.order.repository.OrderRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,9 +33,9 @@ import static org.mockito.BDDMockito.given;
 class OrderServiceTest {
 
     @Mock
-    private MenuDao menuDao;
+    private MenuRepository menuRepository;
     @Mock
-    private OrderDao orderDao;
+    private OrderRepository orderRepository;
     @Mock
     private OrderLineItemDao orderLineItemDao;
     @Mock
@@ -45,9 +49,9 @@ class OrderServiceTest {
     void testCreateOrder() {
         //given
         Order order = 첫번째주문();
-        given(menuDao.countByIdIn(any())).willReturn((long) order.getOrderLineItems().size());
+        given(menuRepository.countByIdIn(any())).willReturn((long) order.getOrderLineItems().size());
         given(orderTableDao.findById(any())).willReturn(Optional.of(첫번째주문테이블()));
-        given(orderDao.save(any())).willReturn(첫번째주문());
+        given(orderRepository.save(any())).willReturn(첫번째주문());
         given(orderLineItemDao.save(any())).willReturn(any());
 
         //when
@@ -75,7 +79,7 @@ class OrderServiceTest {
     void testCreateOrderMenuNotExist() {
         //given
         Order order = 첫번째주문();
-        given(menuDao.countByIdIn(any())).willReturn(0L);
+        given(menuRepository.countByIdIn(any())).willReturn(0L);
 
         //when, then
         assertThatThrownBy(() -> {
@@ -88,7 +92,7 @@ class OrderServiceTest {
     void testCreateOrderTableNotExist() {
         //given
         Order order = 첫번째주문();
-        given(menuDao.countByIdIn(any())).willReturn((long) order.getOrderLineItems().size());
+        given(menuRepository.countByIdIn(any())).willReturn((long) order.getOrderLineItems().size());
         given(orderTableDao.findById(any())).willReturn(Optional.empty());
 
         //when, then
@@ -102,7 +106,7 @@ class OrderServiceTest {
     void testCreateOrderEmptyTable() {
         //given
         Order order = 첫번째주문();
-        given(menuDao.countByIdIn(any())).willReturn((long) order.getOrderLineItems().size());
+        given(menuRepository.countByIdIn(any())).willReturn((long) order.getOrderLineItems().size());
         given(orderTableDao.findById(any())).willReturn(Optional.of(비어있는주문테이블1()));
 
         //when, then
@@ -115,7 +119,7 @@ class OrderServiceTest {
     @Test
     void testList() {
         //given
-        given(orderDao.findAll()).willReturn((Collections.singletonList(첫번째주문())));
+        given(orderRepository.findAll()).willReturn((Collections.singletonList(첫번째주문())));
 
         //when
         List<Order> actual = orderService.list();
@@ -128,12 +132,11 @@ class OrderServiceTest {
     @Test
     void testChangeOrderStatus() {
         //given
-        Order order = new Order();
-        order.setOrderStatus(OrderStatus.MEAL.name());
-        given(orderDao.findById(any())).willReturn(Optional.of(첫번째주문(OrderStatus.COOKING)));
+        OrderRequest orderRequest = new OrderRequest(1L, OrderStatus.MEAL.name(), Collections.emptyList());
+        given(orderRepository.findById(any())).willReturn(Optional.of(첫번째주문(OrderStatus.COOKING)));
 
         //when
-        Order actual = orderService.changeOrderStatus(1L, order);
+        OrderResponse actual = orderService.changeOrderStatus(1L, orderRequest);
 
         //then
         assertThat(actual.getOrderStatus()).isEqualTo(OrderStatus.MEAL.name());

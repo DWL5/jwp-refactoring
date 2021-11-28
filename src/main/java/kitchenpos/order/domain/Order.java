@@ -1,14 +1,36 @@
-package kitchenpos.domain;
+package kitchenpos.order.domain;
 
+import kitchenpos.order.application.OrderValidator;
+
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
+@Entity
 public class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long orderTableId;
     private String orderStatus;
     private LocalDateTime orderedTime;
+
+    @OneToMany
     private List<OrderLineItem> orderLineItems;
+
+    public Order(Long id, Long orderTableId, String orderStatus, LocalDateTime orderedTime, List<OrderLineItem> orderLineItems, OrderValidator validator) {
+        this.id = id;
+        this.orderTableId = orderTableId;
+        this.orderStatus = orderStatus;
+        this.orderedTime = orderedTime;
+        this.orderLineItems = orderLineItems;
+        validator.validateWhenCreated(this);
+    }
+
+    public Order(Long orderTableId, String orderStatus, LocalDateTime orderedTime, List<OrderLineItem> orderLineItems, OrderValidator validator) {
+        this(null, orderTableId, orderStatus, orderedTime, orderLineItems, validator);
+    }
 
     public Long getId() {
         return id;
@@ -31,6 +53,14 @@ public class Order {
     }
 
     public void setOrderStatus(final String orderStatus) {
+        this.orderStatus = orderStatus;
+    }
+
+    public void changeOrderStatus(final String orderStatus) {
+        if (Objects.equals(OrderStatus.COMPLETION.name(), this.orderStatus)) {
+            throw new IllegalArgumentException();
+        }
+
         this.orderStatus = orderStatus;
     }
 
